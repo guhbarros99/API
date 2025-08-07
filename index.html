@@ -1,0 +1,208 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clima em London</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #1e3a8a;
+            margin-bottom: 5px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            color: #6b7280;
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+        .weather-main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .temperature {
+            font-size: 4em;
+            font-weight: bold;
+            color: #3b82f6;
+            margin: 10px 0;
+        }
+        .weather-description {
+            font-size: 1.5em;
+            text-transform: capitalize;
+            color: #1e40af;
+        }
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            text-align: left;
+            margin-top: 20px;
+        }
+        .detail-item {
+            background-color: #eef2ff;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .detail-item h3 {
+            margin: 0 0 5px 0;
+            font-size: 1em;
+            color: #4b5563;
+        }
+        .detail-item p {
+            margin: 0;
+            font-size: 1.2em;
+            font-weight: 500;
+            color: #1f2937;
+        }
+        .error-message {
+            color: #d9534f;
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 id="city-name">Carregando...</h1>
+    <p class="subtitle" id="data-time"></p>
+
+    <div class="weather-main">
+        <h2 class="weather-description" id="weather-description"></h2>
+        <div class="temperature">
+            <span id="current-temp"></span>
+        </div>
+        <p>Sensação térmica de <span id="feels-like-temp"></span></p>
+    </div>
+
+    <hr style="border: 0; height: 1px; background-color: #e5e7eb; margin: 30px 0;">
+
+    <div class="details-grid">
+        <div class="detail-item">
+            <h3>Temperatura Mínima</h3>
+            <p id="min-temp"></p>
+        </div>
+        <div class="detail-item">
+            <h3>Temperatura Máxima</h3>
+            <p id="max-temp"></p>
+        </div>
+        <div class="detail-item">
+            <h3>Umidade</h3>
+            <p id="humidity"></p>
+        </div>
+        <div class="detail-item">
+            <h3>Pressão</h3>
+            <p id="pressure"></p>
+        </div>
+        <div class="detail-item">
+            <h3>Visibilidade</h3>
+            <p id="visibility"></p>
+        </div>
+        <div class="detail-item">
+            <h3>Vento</h3>
+            <p id="wind"></p>
+        </div>
+        <div class="detail-item">
+            <h3>Nascer do Sol</h3>
+            <p id="sunrise-time"></p>
+        </div>
+        <div class="detail-item">
+            <h3>Pôr do Sol</h3>
+            <p id="sunset-time"></p>
+        </div>
+    </div>
+    <div id="error-message" class="error-message">Não foi possível carregar os dados do clima. Por favor, verifique sua chave de API ou tente novamente mais tarde.</div>
+</div>
+
+<script>
+    // Configurações da API
+    const API_KEY = "82e20905715def5da79e69537294c704"; // Sua chave de API
+    const CITY = "São Paulo,BR";
+    const API_URL = `https://api.openweathermap.org/data/2.5/weather?q=${CITY}&appid=${API_KEY}&units=metric&lang=pt_br`;
+
+    // Função para converter Unix timestamp para um formato legível
+    function formatTime(timestamp) {
+        const date = new Date(timestamp * 1000);
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+
+    // Função para formatar a data completa
+    function formatDateTime(timestamp) {
+        const date = new Date(timestamp * 1000);
+        return date.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    // Função para buscar os dados do clima e atualizar a página
+    async function getWeatherData() {
+        try {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+
+            if (data.cod !== 200) {
+                // Exibe uma mensagem de erro se a resposta não for 200
+                document.getElementById('error-message').style.display = 'block';
+                document.querySelector('.container').style.display = 'none';
+                return;
+            }
+
+            // Atualiza os elementos HTML com os dados da API
+            document.getElementById('city-name').textContent = data.name;
+            document.getElementById('data-time').textContent = `Dados atualizados em: ${formatDateTime(data.dt)}`;
+            document.getElementById('weather-description').textContent = data.weather[0].description;
+            document.getElementById('current-temp').textContent = `${Math.round(data.main.temp)}°C`;
+            document.getElementById('feels-like-temp').textContent = `${Math.round(data.main.feels_like)}°C`;
+            document.getElementById('min-temp').textContent = `${Math.round(data.main.temp_min)}°C`;
+            document.getElementById('max-temp').textContent = `${Math.round(data.main.temp_max)}°C`;
+            document.getElementById('humidity').textContent = `${data.main.humidity}%`;
+            document.getElementById('pressure').textContent = `${data.main.pressure} hPa`;
+            document.getElementById('visibility').textContent = `${data.visibility / 1000} km`;
+            document.getElementById('wind').textContent = `${data.wind.speed} m/s (${data.wind.deg}°)`;
+            document.getElementById('sunrise-time').textContent = formatTime(data.sys.sunrise);
+            document.getElementById('sunset-time').textContent = formatTime(data.sys.sunset);
+
+        } catch (error) {
+            console.error('Erro ao buscar dados do clima:', error);
+            document.getElementById('error-message').style.display = 'block';
+            document.querySelector('.container').style.display = 'none';
+        }
+    }
+
+    // Executa a função para carregar os dados quando a página é carregada
+    window.onload = getWeatherData;
+</script>
+
+</body>
+</html>
